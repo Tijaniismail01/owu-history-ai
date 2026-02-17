@@ -42,6 +42,16 @@ class TestOrikiRetrieval(unittest.TestCase):
         self.assertTrue("3. oriki ajibosin" in normalized_narrative or "lineage praise" in normalized_narrative, 
                         "Should retrieve the specific Ajibosin Oriki section")
 
+    def test_retrieve_owu_wars(self):
+        print("\nTesting 'Owu Wars' query...")
+        response = self.agent.generate("Tell me about the Owu Wars", 25, "General", "Neutral")
+        print(f"Top results: {[s.title for s in response.sources]}")
+        print(f"Narrative match id: {response.narrative[:100]}...")
+        
+        normalized_narrative = self.normalize_text(response.narrative)
+        self.assertTrue("war" in normalized_narrative, "Should contain information about wars")
+        self.assertTrue("1821" in normalized_narrative or "1825" in normalized_narrative, "Should contain relevant dates for Owu War")
+
     def test_retrieve_general_oriki(self):
         print("\nTesting 'Oriki Owu' query...")
         response = self.agent.generate("Give me the Oriki of Owu", 25, "General", "Neutral")

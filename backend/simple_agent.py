@@ -106,11 +106,20 @@ class SimpleSearchAgent:
         top_docs = scored_docs[:3]
         
         if not top_docs:
+             # Construct a list of available topics from source filenames or content
+             available_topics = set()
+             for d in self.documents:
+                 # Use filename as topic hint, removing extension
+                 topic = d["source"].replace(".txt", "").replace("_", " ").title()
+                 available_topics.add(topic)
+             
+             topics_str = ", ".join(sorted(list(available_topics)))
+             
              return NarrativeResponse(
-                narrative="I searched the archives but couldn't find specific information matching your query. Try asking about 'Owu origins', 'wars', or 'culture'.",
+                narrative=f"I searched the archives but couldn't find specific information matching your query. \n\nHowever, I have information on the following topics: {topics_str}. \n\nTry asking about 'Owu Wars', 'Origins', or 'Praise Poetry'.",
                 timeline=[],
                 sources=[],
-                metadata={"info": "No matches"}
+                metadata={"info": "No matches", "available_topics": list(available_topics)}
             )
 
         # Construct Narrative
