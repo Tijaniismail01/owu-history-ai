@@ -3,13 +3,11 @@ from typing import List
 from dotenv import load_dotenv
 
 load_dotenv()
-from langchain_community.document_loaders import TextLoader, DirectoryLoader, PyPDFLoader
-try:
-    from langchain.text_splitter import RecursiveCharacterTextSplitter
-except ImportError:
-    from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import Chroma
-from langchain_openai import OpenAIEmbeddings
+import os
+from typing import List
+from dotenv import load_dotenv
+
+load_dotenv()
 from langchain_core.documents import Document
 
 # Define base paths
@@ -22,6 +20,14 @@ def ingest_documents():
     Ingests documents from backend/data/raw. 
     Supports .txt and .pdf files.
     """
+    # Lazy imports
+    from langchain_community.document_loaders import TextLoader, DirectoryLoader, PyPDFLoader
+    try:
+        from langchain.text_splitter import RecursiveCharacterTextSplitter
+    except ImportError:
+        from langchain_text_splitters import RecursiveCharacterTextSplitter
+    from langchain_community.vectorstores import Chroma
+    from langchain_openai import OpenAIEmbeddings
     if not os.path.exists(DATA_DIR):
         os.makedirs(DATA_DIR)
         print(f"Created {DATA_DIR}. Please add documents.")

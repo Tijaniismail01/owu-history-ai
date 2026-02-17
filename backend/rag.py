@@ -1,13 +1,6 @@
 import os
 import json
 from typing import List, Dict, Any
-from langchain_community.vectorstores import Chroma
-from langchain_openai import OpenAIEmbeddings, ChatOpenAI
-from langchain.prompts import PromptTemplate
-from langchain.chains import RetrievalQA
-from langchain.output_parsers import PydanticOutputParser
-from pydantic import ValidationError
-
 from .schemas import NarrativeResponse, TimelineEvent, Source
 from .personalization import adjust_prompt
 
@@ -15,25 +8,38 @@ from .personalization import adjust_prompt
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_DIR = os.path.join(BASE_DIR, "data", "chroma_db")
 
-# Initialize Global Components
-embeddings = OpenAIEmbeddings()
-
 def get_vectorstore():
+    # Lazy import to avoid startup overhead
+    try:
+        from langchain_community.vectorstores import Chroma
+        from langchain_openai import OpenAIEmbeddings
+    except ImportError:
+        return None
+
     if not os.path.exists(DB_DIR):
         # Return empty or handle gracefully if no DB yet
         return None
-    return Chroma(persist_directory=DB_DIR, embedding_function=embeddings)
+    
+    try:
+        embeddings = OpenAIEmbeddings()
+        return Chroma(persist_directory=DB_DIR, embedding_function=embeddings)
+    except Exception as e:
+        print(f"VectorStore Init Error: {e}")
+        return None
 
 def get_qa_chain():
     """
     Returns a function that takes a query and user params, 
     and returns a structured NarrativeResponse.
     """
+    # Lazy imports
+    from langchain.prompts import PromptTemplate
+    from langchain.chains import RetrievalQA
+    from langchain_openai import ChatOpenAI
+    
     vectorstore = get_vectorstore()
     if not vectorstore:
         return None
-
-    llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0.7)
     retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
 
     def process_query(query: str, age: int, education: str, tone: str) -> NarrativeResponse:
