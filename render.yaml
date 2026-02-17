@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: owu-history-ai
+    env: python
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.0
+      - key: OPENAI_API_KEY
+        generateValue: true
+        description: Required if you want to use the RAG features. Local search works without it.
