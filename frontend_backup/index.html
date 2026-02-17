@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Owu History AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Fonts: Cormorant Garamond for History/Display, Outfit for UI -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Outfit:wght@200;300;400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-deep: #050505;
+            --bg-glass: rgba(20, 20, 20, 0.6);
+            --text-main: #EAEAEA;
+            --text-muted: #888888;
+            --accent-gold: #D4AF37;
+            --border-subtle: rgba(255, 255, 255, 0.08);
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            /* Full app experience */
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        .font-display {
+            font-family: 'Cormorant Garamond', serif;
+        }
+
+        /* Utilities */
+        .text-gold {
+            color: var(--accent-gold);
+        }
+
+        .border-gold {
+            border-color: var(--accent-gold);
+        }
+
+        .glass-panel {
+            background: var(--bg-glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-subtle);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 2px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-gold);
+        }
+
+        /* Animation Classes */
+        .fade-in {
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+
+        .slide-up {
+            animation: slideUp 0.6s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Input Range Styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 12px;
+            width: 12px;
+            border-radius: 50%;
+            background: var(--accent-gold);
+            margin-top: -5px;
+            cursor: pointer;
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 2px;
+            background: #333;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+    <script>
+        window.onerror = function (message, source, lineno, colno, error) {
+            document.getElementById('root').innerHTML = '<div style="color: #D4AF37; padding: 20px; font-family: monospace;"><h3>System Error</h3><p>' + message + '</p></div>';
+        };
+    </script>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { createRoot } = ReactDOM;
+
+        // --- Icons ---
+        const Icon = ({ path, size = 20, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                {path}
+            </svg>
+        );
+        const Icons = {
+            Menu: <path d="M3 12h18M3 6h18M3 18h18" />,
+            Search: <path d="M11 11a8 8 0 1 0 0-1.06zM21 21l-4.35-4.35" />, // Custom path logic for circle+line
+            Feather: <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5zM16 8 2 22M17.5 15H9" />,
+            Clock: <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />,
+            Map: <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" /><line x1="8" y1="2" x2="8" y2="18" /><line x1="16" y1="6" x2="16" y2="22" />,
+            ChevronRight: <path d="m9 18 6-6-6-6" />,
+            X: <path d="M18 6 6 18M6 6l12 12" />
+        };
+
+        // --- Components ---
+
+        const Sidebar = ({ activeTab, setActiveTab }) => (
+            <aside className="fixed left-0 top-0 bottom-0 w-20 flex flex-col items-center py-8 z-50 border-r border-[#ffffff0a] bg-[#050505]/80 backdrop-blur-md">
+                {/* Logo */}
+                <div className="w-10 h-10 rounded-full border border-[#D4AF37] flex items-center justify-center text-[#D4AF37] font-display text-xl mb-12 shadow-[0_0_15px_rgba(212,175,55,0.2)]">
+                    O
+                </div>
+
+                {/* Nav Items */}
+                <nav className="flex flex-col gap-8 w-full items-center">
+                    {[
+                        { id: 'narrative', icon: Icons.Feather, label: 'Narrative' },
+                        { id: 'timeline', icon: Icons.Clock, label: 'Timeline' },
+                        { id: 'map', icon: Icons.Map, label: 'Map' }
+                    ].map((item) => (
+                        <button
+                            key={item.id}
+                            onClick={() => setActiveTab(item.id)}
+                            className={`group relative w-10 h-10 flex items-center justify-center rounded-xl transition-all duration-300
+                                ${activeTab === item.id ? 'text-black bg-[#D4AF37]' : 'text-[#555] hover:text-[#EAEAEA] hover:bg-[#ffffff0a]'}`}
+                        >
+                            <Icon path={item.icon} size={20} />
+                            {/* Tooltip */}
+                            <span className="absolute left-14 bg-[#1a1a1a] text-[#EAEAEA] text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap border border-[#333] pointer-events-none">
+                                {item.label}
+                            </span>
+                        </button>
+                    ))}
+                </nav>
+            </aside>
+        );
+
+        const CommandBar = ({ onSearch }) => (
+            <div className="fixed bottom-8 left-0 right-0 z-40 flex justify-center pointer-events-none fade-in" style={{ animationDelay: '0.5s' }}>
+                <div className="pointer-events-auto w-full max-w-2xl mx-4">
+                    <div className="glass-panel rounded-2xl p-2 flex items-center gap-4 shadow-2xl transition-all focus-within:border-[#D4AF37]/50 focus-within:shadow-[0_0_30px_rgba(212,175,55,0.1)]">
+                        <div className="w-10 h-10 rounded-xl bg-[#0a0a0a] flex items-center justify-center text-[#D4AF37]">
+                            <Icon path={<circle cx="11" cy="11" r="8" />} className="translate-x-[-1px] translate-y-[-1px]" /><Icon path={<line x1="21" y1="21" x2="16.65" y2="16.65" />} />
+                        </div>
+                        <input
+                            type="text"
+                            placeholder="Ask the archives about Owu history..."
+                            className="flex-1 bg-transparent border-none outline-none text-[#EAEAEA] placeholder-[#555] text-lg font-light h-10"
+                            onKeyDown={(e) => e.key === 'Enter' && onSearch(e.target.value)}
+                        />
+                        <button className="h-10 px-6 bg-[#EAEAEA] text-black font-medium text-sm tracking-wide rounded-lg hover:bg-[#D4AF37] transition-colors">
+                            EXPLORE
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+
+        const NarrativeContent = ({ loading }) => (
+            <div className="max-w-4xl mx-auto pt-10 pb-40 px-8 slide-up">
+                {/* Header Metadata */}
+                <div className="flex items-center gap-4 text-xs tracking-[0.2em] text-[#D4AF37] mb-6 opacity-80">
+                    <span>ARCHIVE RECORD #892</span>
+                    <span className="w-px h-3 bg-[#333]"></span>
+                    <span>SOURCE: ORAL TRADITION</span>
+                </div>
+
+                {/* Main Title */}
+                <h1 className="text-6xl md:text-7xl font-display text-[#EAEAEA] leading-[0.9] mb-12">
+                    The Great Migration <br />
+                    <span className="text-[#333] selection:text-[#D4AF37] opacity-50">to Abeokuta</span>
+                </h1>
+
+                {/* Content Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
+
+                    {/* Left Column (Text) */}
+                    <div className="md:col-span-7 space-y-8 text-lg font-light leading-relaxed text-[#bbb]">
+                        <p>
+                            <span className="text-[#D4AF37] text-4xl float-left mr-3 mt-[-6px] font-display">T</span>he siege of Owu Ipole was not merely a military engagement; it was a cataclysm that reshaped the Yoruba geopolitical landscape. For five long years, the allied forces of Ife and Ijebu laid siege, reducing the once-proud kingdom to dust.
+                        </p>
+                        <p>
+                            In the aftermath, the surviving Owu people began a perilous journey southwards. It was a migration born of necessity, guided by prophecy and the indomitable spirit of a warrior people refusing to be extinguished.
+                        </p>
+                        <div className="p-6 border-l w-full border-[#D4AF37]/30 bg-[#D4AF37]/5 italic text-[#D4AF37]">
+                            "We did not flee; we moved the heart of the kingdom to new soil."
+                        </div>
+                        <p>
+                            Crossing the Ogun River, they finally found sanctuary alongside the Egba refugees at the foot of the Olumo Rock. In 1834, the settlement of Abeokuta became their new fortress, and the Owu quarters were established, solidifying their place in the new confederacy.
+                        </p>
+                    </div>
+
+                    {/* Right Column (Visual/Artifact) */}
+                    <div className="md:col-span-5 space-y-8">
+                        {/* Image Card */}
+                        <div className="group relative aspect-[3/4] overflow-hidden border border-[#ffffff0a] bg-[#111]">
+                            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent z-10 opacity-60"></div>
+                            {/* Placeholder for Graphic */}
+                            <div className="w-full h-full bg-[#151515] flex items-center justify-center text-[#333] group-hover:scale-105 transition-transform duration-700">
+                                [Historical Plate: 1834]
+                            </div>
+
+                            <div className="absolute bottom-6 left-6 z-20">
+                                <div className="text-[#D4AF37] text-xs uppercase tracking-widest mb-1">Figure 1.a</div>
+                                <div className="text-white font-display text-2xl">The Arrival</div>
+                            </div>
+                        </div>
+
+                        {/* Stat Block */}
+                        <div className="grid grid-cols-2 border-t border-[#333] pt-6">
+                            <div>
+                                <div className="text-xs text-[#555] uppercase tracking-wider mb-1">Year</div>
+                                <div className="text-xl text-[#EAEAEA] font-display">c. 1834</div>
+                            </div>
+                            <div>
+                                <div className="text-xs text-[#555] uppercase tracking-wider mb-1">Leader</div>
+                                <div className="text-xl text-[#EAEAEA] font-display">Pawu</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+
+        function App() {
+            const [activeTab, setActiveTab] = useState('narrative');
+            const [loading, setLoading] = useState(false);
+
+            return (
+                <div className="min-h-screen w-full bg-[#050505] text-[#EAEAEA]">
+                    <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+
+                    {/* Top Right Controls */}
+                    <div className="fixed top-8 right-8 z-50 flex items-center gap-6 text-[#555]">
+                        <div className="flex items-center gap-2 text-xs uppercase tracking-widest hover:text-[#D4AF37] transition-colors cursor-pointer">
+                            <span>Owu Perspective</span>
+                            <Icon path={Icons.ChevronRight} size={14} />
+                        </div>
+                        <div className="hidden md:flex flex-col gap-1 w-24 group">
+                            <div className="text-[10px] uppercase text-right group-hover:text-[#D4AF37] transition-colors">Depth</div>
+                            <div className="h-0.5 bg-[#333] w-full relative">
+                                <div className="absolute right-0 top-0 bottom-0 bg-[#D4AF37] w-3/4"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Main Stage */}
+                    <main className="pl-20 w-full min-h-screen overflow-y-auto custom-scrollbar relative">
+                        {/* Background Decor */}
+                        <div className="fixed top-0 right-0 w-[50vw] h-[50vh] bg-[#D4AF37] opacity-[0.03] blur-[100px] pointer-events-none rounded-full translate-x-1/2 -translate-y-1/2"></div>
+
+                        <NarrativeContent loading={loading} />
+
+                        <CommandBar onSearch={(q) => console.log(q)} />
+                    </main>
+                </div>
+            );
+        }
+
+        const root = createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+
+</html>

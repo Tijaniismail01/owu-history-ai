@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+venv/
+env/
+
+# Environment Variables
+.env
+.env.local
+
+# IDEs
+.vscode/
+.idea/
+
+# Distribution / Build
+build/
+dist/
+*.egg-info/
+
+# Data (Optional - usually don't commit large raw data or keep sample only)
+# Keeping raw data committed for this specific project as it's small text files
+# backend/data/raw/
